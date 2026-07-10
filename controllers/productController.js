@@ -1,6 +1,19 @@
 const Product = require("../models/Product");
-const fs = require("fs");
-const path = require("path");
+const { cloudinary } = require("../config/cloudinary");
+
+const getCloudinaryPublicId = (imageUrl) => {
+  if (!imageUrl || !imageUrl.includes("res.cloudinary.com")) return null;
+
+  try {
+    const uploadSegment = imageUrl.split("/upload/")[1];
+    if (!uploadSegment) return null;
+
+    const withoutVersion = uploadSegment.replace(/^v\d+\//, "");
+    return withoutVersion.replace(/\.[^.]+$/, "");
+  } catch {
+    return null;
+  }
+};
 
 // @desc    Get all products (public)
 exports.getProducts = async (req, res) => {
@@ -61,7 +74,7 @@ exports.createProduct = async (req, res) => {
   try {
     const productData = { ...req.body };
     if (req.file) {
-      productData.image = `/uploads/${req.file.filename}`;
+      productData.image = req.file.path;
     }
     if (typeof productData.features === "string") {
       productData.features = productData.features
@@ -114,12 +127,11 @@ exports.updateProduct = async (req, res) => {
         .filter(Boolean);
     }
     if (req.file) {
-      // Delete old image
-      if (product.image && !product.image.includes("default")) {
-        const oldImagePath = path.join(__dirname, "..", product.image);
-        if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+      const publicId = getCloudinaryPublicId(product.image);
+      if (publicId) {
+        cloudinary.uploader.destroy(publicId).catch(() => {});
       }
-      updateData.image = `/uploads/${req.file.filename}`;
+      updateData.image = req.file.path;
     }
 
     const updated = await Product.findByIdAndUpdate(req.params.id, updateData, {
@@ -143,9 +155,9 @@ exports.deleteProduct = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
-    if (product.image && !product.image.includes("default")) {
-      const imagePath = path.join(__dirname, "..", product.image);
-      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    const publicId = getCloudinaryPublicId(product.image);
+    if (publicId) {
+      cloudinary.uploader.destroy(publicId).catch(() => {});
     }
 
     await product.deleteOne();

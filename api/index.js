@@ -5,7 +5,6 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
 const app = express();
 
 app.use(helmet({
@@ -33,12 +32,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-
-const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
-const uploadDir = isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', 'uploads');
-app.use('/uploads', express.static(
-  uploadDir
-));
 
 app.use('/api/products', require('../routes/products'));
 app.use('/api/enquiries', require('../routes/enquiries'));
