@@ -42,7 +42,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+app.use('/uploads', express.static(
+  isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads')
+));
 
 // Routes
 app.use('/api/products', require('./routes/products'));
@@ -50,6 +53,14 @@ app.use('/api/enquiries', require('./routes/enquiries'));
 app.use('/api/auth', require('./routes/auth'));
 
 // Health check
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Laksh Automations API is running',
+    endpoints: ['/api/health', '/api/products', '/api/enquiries', '/api/auth']
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Laksh Automations API is running', timestamp: new Date() });
 });

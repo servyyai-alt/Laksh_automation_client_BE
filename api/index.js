@@ -35,13 +35,22 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+const uploadDir = isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', 'uploads');
 app.use('/uploads', express.static(
-  isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', 'uploads')
+  uploadDir
 ));
 
 app.use('/api/products', require('../routes/products'));
 app.use('/api/enquiries', require('../routes/enquiries'));
 app.use('/api/auth', require('../routes/auth'));
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Laksh Automations API is running',
+    endpoints: ['/api/health', '/api/products', '/api/enquiries', '/api/auth']
+  });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Laksh Automations API is running', timestamp: new Date() });

@@ -9,12 +9,14 @@ const upload = require('../middleware/upload');
 
 // Public routes
 router.get('/', getProducts);
-router.get('/:id', getProduct);
 
 // Admin routes
 router.get('/admin/all', protect, adminGetProducts);
 router.post('/', protect, upload.single('image'), createProduct);
 router.put('/:id', protect, upload.single('image'), updateProduct);
 router.delete('/:id', protect, deleteProduct);
+
+// Keep param route last so it does not swallow more specific paths
+router.get('/:id', getProduct);
 
 module.exports = router;
