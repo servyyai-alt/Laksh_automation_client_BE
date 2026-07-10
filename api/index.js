@@ -6,8 +6,6 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-require('dotenv').config();
-
 const app = express();
 
 app.use(helmet({
@@ -36,7 +34,10 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+app.use('/uploads', express.static(
+  isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', 'uploads')
+));
 
 app.use('/api/products', require('../routes/products'));
 app.use('/api/enquiries', require('../routes/enquiries'));
