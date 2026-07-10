@@ -8,6 +8,8 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
+// Trust the first proxy hop so rate limiting uses the real client IP in hosted environments.
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({

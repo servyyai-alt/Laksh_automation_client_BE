@@ -6,6 +6,8 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const app = express();
+// Trust the first proxy hop so rate limiting uses the real client IP in hosted environments.
+app.set('trust proxy', 1);
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
