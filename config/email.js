@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
     secure: false,
@@ -14,11 +14,20 @@ const createTransporter = () => {
 };
 
 exports.sendEnquiryEmail = async (enquiry) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('Email credentials are not configured');
+  }
+
+  if (!process.env.ADMIN_EMAIL) {
+    throw new Error('ADMIN_EMAIL is not configured');
+  }
+
   const transporter = createTransporter();
+  const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
   // Admin notification
   await transporter.sendMail({
-    from: `"Laksh Automations Website" <${process.env.EMAIL_FROM}>`,
+    from: `"Laksh Automations Website" <${fromAddress}>`,
     to: process.env.ADMIN_EMAIL,
     subject: `New Enquiry from ${enquiry.name} - ${enquiry.city}`,
     html: `
@@ -42,12 +51,5 @@ exports.sendEnquiryEmail = async (enquiry) => {
         </div>
       </div>
     `
-  });
-
-  // Customer confirmation
-  await transporter.sendMail({
-    from: `"Laksh Automations" <${process.env.EMAIL_FROM}>`,
-    to: '',  // Customer doesn't have email in this form, skip or add if needed
-    subject: 'Thank you for your enquiry - Laksh Automations'
   });
 };
