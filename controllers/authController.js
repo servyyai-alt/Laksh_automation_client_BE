@@ -70,7 +70,7 @@ exports.setup = async (req, res) => {
 
     const admin = await Admin.create({
       name: 'Super Admin',
-      email: req.body.email || 'admin@lakshautomations.com',
+      email: req.body.email || 'admin@lakshautomations.in',
       password: req.body.password || 'Admin@1234',
       role: 'superadmin'
     });
