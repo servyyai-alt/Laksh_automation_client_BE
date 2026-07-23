@@ -9,10 +9,31 @@ const app = express();
 // Trust the first proxy hop so rate limiting uses the real client IP in hosted environments.
 app.set('trust proxy', 1);
 
+const canonicalHost = 'www.lakshautomations.in';
+const canonicalOrigin = `https://${canonicalHost}`;
+const isLocalHost = (host = '') =>
+  host === 'localhost' ||
+  host === '127.0.0.1' ||
+  host.startsWith('localhost:') ||
+  host.startsWith('127.0.0.1:');
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 app.use(compression());
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  }
+
+  const host = req.hostname;
+  if (!isLocalHost(host) && host !== canonicalHost) {
+    const target = new URL(req.originalUrl, canonicalOrigin);
+    return res.redirect(301, target.toString());
+  }
+
+  next();
+});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
