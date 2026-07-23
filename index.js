@@ -18,6 +18,15 @@ const isLocalHost = (host = '') =>
   host === '127.0.0.1' ||
   host.startsWith('localhost:') ||
   host.startsWith('127.0.0.1:');
+const allowedOrigins = new Set(
+  [
+    process.env.CLIENT_URL,
+    'https://www.lakshautomations.in',
+    'https://lakshautomations.in',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+  ].filter(Boolean)
+);
 
 // Security middleware
 app.use(helmet({
@@ -27,6 +36,7 @@ app.use(compression());
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return next();
   }
 
   const host = req.hostname;
@@ -48,7 +58,11 @@ app.use('/api/', limiter);
 
 // CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.has(origin)) return cb(null, true);
+    return cb(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
