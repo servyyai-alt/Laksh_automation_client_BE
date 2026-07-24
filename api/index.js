@@ -6,25 +6,13 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const app = express();
+const { buildAllowedOrigins, isLocalHost } = require('../config/origins');
 // Trust the first proxy hop so rate limiting uses the real client IP in hosted environments.
 app.set('trust proxy', 1);
 
 const canonicalHost = 'www.lakshautomations.in';
 const canonicalOrigin = `https://${canonicalHost}`;
-const isLocalHost = (host = '') =>
-  host === 'localhost' ||
-  host === '127.0.0.1' ||
-  host.startsWith('localhost:') ||
-  host.startsWith('127.0.0.1:');
-const allowedOrigins = new Set(
-  [
-    process.env.CLIENT_URL,
-    'https://www.lakshautomations.in',
-    'https://lakshautomations.in',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-  ].filter(Boolean)
-);
+const allowedOrigins = buildAllowedOrigins();
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
