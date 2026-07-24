@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const { buildAllowedOrigins, isLocalHost } = require('./config/origins');
+const connectDB = require('./config/db');
 
 const app = express();
 // Trust the first proxy hop so rate limiting uses the real client IP in hosted environments.
@@ -43,6 +44,15 @@ const limiter = rateLimit({
   message: { success: false, message: 'Too many requests, please try again later.' }
 });
 app.use('/api/', limiter);
+
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // CORS
 app.use(cors({
@@ -98,7 +108,7 @@ app.use((err, req, res, next) => {
 });
 
 // Database connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/laksh-automations')
+connectDB()
   .then(() => {
     console.log('✅ MongoDB connected');
     const PORT = process.env.PORT || 5000;
